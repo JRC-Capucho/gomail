@@ -2,33 +2,32 @@ package main
 
 import (
 	"gomail/internal/domain/campaign"
+	"gomail/internal/endpoints"
+	"gomail/internal/infrastructure/database"
+	"net/http"
 
-	"github.com/go-playground/validator/v10"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 )
 
 func main() {
-	contacts := []campaign.Contact{{Email: "test"}, {Email: ""}}
-	campaign := campaign.Campaign{Contacts: contacts}
+	r := chi.NewRouter()
 
-	validate := validator.New()
+	r.Use(middleware.RequestID)
+	r.Use(middleware.RealIP)
+	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
 
-	err := validate.Struct(campaign)
-	if err == nil {
-		println("Don't have error")
-	} else {
-		validationErrors := err.(validator.ValidationErrors)
-
-		for _, v := range validationErrors {
-			switch v.Tag() {
-			case "required":
-				println(v.StructField() + " is required")
-			case "min":
-				println(v.StructField() + " is required with min " + v.Param())
-			case "max":
-				println(v.StructField() + " is required with max " + v.Param())
-			case "email":
-				println(v.StructField() + " is invalid")
-			}
-		}
+	campaingService := campaign.Service{
+		Repository: &database.CampaignRepository{},
 	}
+
+	handler := endpoints.Handler{
+		CampaingService: campaingService,
+	}
+
+	r.Post("/campaigns", handler.CampaignPost)
+	r.Get("/campaigns", handler.CampaignGet)
+
+	http.ListenAndServe(":3333", r)
 }

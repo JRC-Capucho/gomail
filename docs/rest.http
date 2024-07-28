@@ -1,0 +1,17 @@
+@url=http://localhost:3333
+
+###
+
+POST {{url}}/campaigns
+content-type: application/json
+accept-language: en-US,en;q=0.5
+
+{
+  "name": "joaoroberto",
+  "content": "change password",
+  "emails" : ["testing@mail.com"]
+}
+
+###
+
+GET {{url}}/campaigns
